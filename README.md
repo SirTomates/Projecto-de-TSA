@@ -2,4 +2,4 @@
 ## Sergio Godinho
 ## tema do projeto
 Projecto final da disciplina de script
-ainda estou a pensar
+Em principio calendario onde adiciona-se um emvento e é alertado atraves se uma API
