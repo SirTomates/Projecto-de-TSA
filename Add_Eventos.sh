@@ -44,25 +44,25 @@ adicionar_contato() {
 
     echo "- Nome do novo contacto =>"; read nome
         if [ -z "$nome" ]; then
-            menu_principal
+            return
         fi
     echo "- Número do contacto =>"; read num
         if [ -z "$num" ]; then
-            menu_principal
+            return
         fi
    
+   # Validação (Portugal – 9 dígitos começando por 9)
     if ! [[ "$num" =~ ^9[0-9]{8}$ ]]; then
         echo "************************";
         echo "    Número invalido ";
         echo "************************";
-        $nome=null
-        adicionar_contato
+       return
     fi
 
     echo "Deseja guardar o contacto?(s/n)"; read conf
     [[ "$conf" != "s" ]] && { echo "Cancelado."; return; }
 
-    echo "$nome|$numero" >> "$ARQ_Contactos"
+    echo "$nome|$num" >> "$ARQ_Contactos"
     echo "Contato guardado."
 
      clear
@@ -70,7 +70,38 @@ adicionar_contato() {
 
 listar_contatos() {
     echo "--- Lista Telefónica ---"
+    echo "ID. -  Nome   -   Número"
+    echo "-------------------------"
+
     nl -w2 -s". " "$ARQ_Contactos" | sed 's/|/ - /'
+    echo ""
+    echo "-------------------------"
+    echo "Deseja remover algum contacto? (s/n)"
+    read resp
+
+
+    if [[ "$resp" == "s" ]]; then
+    read -p "Digite o número do ID contacto a remover: " id
+
+    # procura o id na lista e verifica se exite
+    total=$(wc -l < "$ARQ_Contactos")
+    if [[ "$id" -lt 1 || "$id" -gt "$total" ]]; then
+    echo "ID inválido."
+    return
+    
+    fi
+
+    # mostra o contacto a remover e pede confirmação
+    contato=$(sed -n "${id}p" "$ARQ_Contactos")
+    echo "Vai remover: $(echo "$contato" | sed 's/|/ - /')'"
+    read -p "Confirmar remoção? (s/n): " conf
+    [[ "$conf" != "s" ]] && { echo "Cancelado."; return; }
+
+    # remove o contacto
+    sed -i "${id}d" "$ARQ_Contactos"
+    echo "Contacto removido com sucesso."
+    fi
+
 }
 
 
