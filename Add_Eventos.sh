@@ -43,7 +43,7 @@ menu_principal() {
 
 adicionar_contato() {
 
-    
+    # Solicita o nome e número do contacto
     echo "- Nome do novo contacto =>"; read nome
         if [ -z "$nome" ]; then
             return
@@ -61,7 +61,7 @@ adicionar_contato() {
         echo "************************";
        return
     fi
-
+    # Pede confirmação antes de guardar
     echo "Deseja guardar o contacto $nome | $num ?(s/n)"; read conf
     [[ "$conf" != "s" ]] && { echo "Cancelado."; return; }
 
@@ -131,6 +131,21 @@ listar_contatos() {
     echo ""
 
     clear
+}
+
+adicionar_evento() {
+    clear
+    echo " --- Adicionar Evento ---"
+    echo "Insira a descrição do evento:"
+    read descricao
+    echo "Insira a data do evento (DD/MM/AAAA):"
+    read data
+    echo "Insira a hora do evento (HH:MM):"
+    read hora
+
+
+
+    
 }
 
 
