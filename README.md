@@ -7,5 +7,6 @@ E que tambem irá ser possivel ter um lista telefonica, adicionar varios numeros
 
 # O que já foi feito:
 
-- Menu Principal : Lista telefonica
+- Menu Principal: Lista telefonica; Adicionar Eventos; Consultar Eventos
 - Menu Lista telefonica: adicionar e remover contactos
+- Adicionar Eventos: Nome do evento; descrição; data e hora; adicionar contactos tanto existentes como novos.
