@@ -8,8 +8,22 @@ ARQ_Contactos="contactos.db"
 
 
 
+# Funções auxiliares
+get_numero_por_id() {
+    sed -n "${1}p" "$ARQ_Contactos" | cut -d '|' -f2
+}
 
 
+validar_data() {
+    date -d "$1" +%Y-%m-%d >/dev/null 2>&1
+    return $?
+}
+
+
+validar_hora() {
+    [[ "$1" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]
+    return $?
+}
 
 
 # Menu principal do script onde o utilizador ira navegar 
@@ -59,8 +73,10 @@ adicionar_contato() {
         echo "************************";
         echo "    Número invalido ";
         echo "************************";
-       return
+        read -p "Enter para continuar..."
+        return
     fi
+
     # Pede confirmação antes de guardar
     echo "Deseja guardar o contacto $nome | $num ?(s/n)"; read conf
     [[ "$conf" != "s" ]] && { echo "Cancelado."; return; }
@@ -83,6 +99,7 @@ remover_contato() {
         echo "************************"
         echo "      ID inválido."
         echo "|           -           |"
+        read -p "Enter para continuar..."
         return
     fi
 
@@ -90,7 +107,11 @@ remover_contato() {
     contato=$(sed -n "${id}p" "$ARQ_Contactos")
     echo "Vai remover: $(echo "$contato" | sed 's/|/ - /')'"
     read -p "Confirmar remoção? (s/n): " conf
-    [[ "$conf" != "s" ]] && { echo "Cancelado."; return; }
+    [[ "$conf" != "s" ]] && { echo "Cancelado."; }
+    read -p "Pressione 'Enter' para continuar..."
+    clear
+    return
+    
 
     # remove o contacto
     sed -i "${id}d" "$ARQ_Contactos"
@@ -133,19 +154,115 @@ listar_contatos() {
     clear
 }
 
+# Função para adicionar eventos
 adicionar_evento() {
     clear
     echo " --- Adicionar Evento ---"
-    echo "Insira a descrição do evento:"
-    read descricao
-    echo "Insira a data do evento (DD/MM/AAAA):"
-    read data
-    echo "Insira a hora do evento (HH:MM):"
-    read hora
 
+    echo "Nome do evento:"; read nome_evento
+    [[ -z "$nome_evento" ]] && return
 
+    echo "Descrição do evento:"; read descricao_evento
+    [[ -z "$descricao_evento" ]] && return
+
+    while true; do
+        echo "Data (YYYY-MM-DD):"; read data
+        validar_data "$data" && break
+        echo "Data inválida! Tente novamente."
+    done
 
     
+    while true; do
+        echo "Hora (HH:MM):"; read hora
+        validar_hora "$hora" && break
+        echo "Hora inválida! Tente novamente."
+    done
+
+    # Adicionar contactos ao evento
+    contatos=""
+    contatos_txt=""
+
+    echo "Adicionar contatos? (s/n)"; read esc
+
+    # Loop para adicionar contactos
+    if [[ "$esc" == "s" ]]; then
+         while true; do
+            clear
+            echo "--- Adicionar Contatos ao Evento ---"
+            echo "1) Da lista"
+            echo "2) Novo número"
+            echo "3) Finalizar"
+            read -p "Escolha: " op
+
+            case $op in
+                 1)
+                    echo "--- Lista Telefónica ---"
+                    echo "ID. -  Nome   -   Número"
+                    echo "-------------------------"
+
+                    nl -w2 -s". " "$ARQ_Contactos" | sed 's/|/ - /'
+
+                    read -p "ID do contato: " idc
+
+                    linha=$(sed -n "${idc}p" "$ARQ_Contactos")
+                    nome=$(echo "$linha" | cut -d'|' -f1)
+                    num=$(echo "$linha" | cut -d'|' -f2)
+
+
+                    if [[ -n "$num" ]]; then
+                        contatos+="$num "
+                        contatos_txt+="$nome, "
+                    fi
+                    ;;
+
+                2)
+                    read -p "Novo número (9XXXXXXXX): " novo
+                    if ! [[ "$novo" =~ ^9[0-9]{8}$ ]]; then
+                        echo "Número inválido."
+                        read -p "Enter para continuar..."
+                        continue
+                    fi
+                    contatos+="$novo "
+                    contatos_txt+="Novo($novo), "
+                    ;;
+
+                3) 
+                    break ;;
+                    *) echo "Opção inválida";;
+            esac
+        done
+    fi
+
+
+    echo "Confirmar guardar evento?"
+    echo "Data: $data"
+    echo "Hora: $hora"
+    echo "Evento: $nome_evento"
+    echo "Descrição: $descricao_evento"
+    echo "Contactos: ${contatos_txt%, }"
+
+    # Confirmar guardar evento
+    read -p "Confirmar (s/n): " conf
+    [[ "$conf" != "s" ]] && { echo "Cancelado."; clear ;return; }
+
+    # Guarda o evento no arquivo
+    echo "$data|$hora|$nome_evento|$descricao_evento|$contatos" >> "$ARQ_Eventos"
+    echo "Evento guardado!"
+    read -p "Enter para continuar..."
+    clear
+}
+
+# Função para consultar eventos
+consultar_eventos() {
+    clear
+    echo "--- Eventos Registados ---"
+    if [[ ! -s "$ARQ_Eventos" ]]; then
+        echo "Sem eventos."
+    else
+        nl -w2 -s". " "$ARQ_Eventos" | sed 's/|/ - /g'
+    fi
+    read -p "Enter para continuar..."
+    clear
 }
 
 
